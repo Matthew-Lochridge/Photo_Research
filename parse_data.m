@@ -1,13 +1,6 @@
-% Parse measurement output from PR-655
-% Inputs:
-%   code = data code (PR-655 manual)
-%   data_string = read measurement string
-% Output:
-%   data_struct = struct with fields corresponding to comma-separated data in data_string
+function data_struct = parse_data(data_struct,data_code,data_string)
 
-function data_struct = parse_data(data_code,data_string)
     data_array = split(data_string,",");
-    data_struct = struct();
 
     switch data_code
         case 1 % status, units, Photometric brightness, CIE 1931 x,y
@@ -298,7 +291,10 @@ function data_struct = parse_data(data_code,data_string)
         %   00000,2,1/4 deg,0.00
         %   00000,3,1/8 deg,0.00
 
-
+            data_struct.error_code = data_array(1);
+            data_struct.aperture_id = data_array(2);
+            data_struct.aperture_name = data_array(3);
+            data_struct.effective_bw = data_array(4);
 
         case 120 % status, Hardware configuration
         % Output Format: qqqqq,pp,bw,bb,ee,ii,nrp,frp,lrp CRLF
@@ -385,21 +381,21 @@ function data_struct = parse_data(data_code,data_string)
         %   00000,0,-1,-1,-1,0,0,0,0,0,1,2,0,0,0,60.00
             
             data_struct.error_code = data_array(1);
-            data_struct.primary_lens = data_array(2);
-            data_struct.addon_1 = data_array(3);
-            data_struct.addon_2 = data_array(4);
-            data_struct.addon_3 = data_array(5);
-            data_struct.aperture = data_array(6);
-            data_struct.units = data_array(7);
-            data_struct.exposure_mode = data_array(8);
+            data_struct.primary_lens_code = data_array(2);
+            data_struct.addon_1_code = data_array(3);
+            data_struct.addon_2_code = data_array(4);
+            data_struct.addon_3_code = data_array(5);
+            data_struct.aperture_code = data_array(6);
+            data_struct.unit_sys_code = data_array(7);
+            data_struct.exposure_mode_code = data_array(8);
             data_struct.exposure_time = data_array(9);
-            data_struct.gain = data_array(10);
-            data_struct.cycles = data_array(11);
-            data_struct.observer = data_array(12);
-            data_struct.dark_mode = data_array(13);
-            data_struct.sync_mode = data_array(14);
-            data_struct.capture_mode = data_array(15);
-            data_struct.sync_freq = data_array(16);
+            data_struct.gain_code = data_array(10);
+            data_struct.cycles_num = data_array(11);
+            data_struct.observer_code = data_array(12);
+            data_struct.dark_mode_code = data_array(13);
+            data_struct.sync_mode_code = data_array(14);
+            data_struct.capture_mode_code = data_array(15);
+            data_struct.sync_freq_num = data_array(16);
 
         case 602 % status, Current Setup Report, Verbose
         % Output Format: Current set report with text labels.
@@ -415,7 +411,7 @@ function data_struct = parse_data(data_code,data_string)
             data_struct.addon_2 = data_array(4);
             data_struct.addon_3 = data_array(5);
             data_struct.aperture = data_array(6);
-            data_struct.units = data_array(7);
+            data_struct.unit_sys = data_array(7);
             data_struct.exposure_mode = data_array(8);
             data_struct.exposure_time = data_array(9);
             data_struct.gain = data_array(10);

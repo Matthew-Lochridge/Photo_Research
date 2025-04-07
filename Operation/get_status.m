@@ -7,4 +7,3 @@ function response = get_status(camera)
     end
     response = writeread(camera,"I");
 end
-

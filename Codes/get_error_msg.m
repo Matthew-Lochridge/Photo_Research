@@ -1,6 +1,9 @@
 function error_msg = get_error_msg(error_code)
     switch error_code
 
+        case 0
+            error_msg = "No error.";
+
         case -1
             error_msg = "Light source not constant.";
 
