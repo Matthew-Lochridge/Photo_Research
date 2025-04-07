@@ -1,8 +1,8 @@
 function sensitivity = get_sensitivity(sensitivity_code)
     switch sensitivity_code
         case 0
-            sensitivity = "Standard";
+            sensitivity = 'Standard';
         case 1
-            sensitivity = "Extended";
+            sensitivity = 'Extended';
     end
 end

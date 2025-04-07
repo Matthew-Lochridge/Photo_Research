@@ -13,9 +13,9 @@ function response = recall_measurement(camera,data_code,measurement_id,file_name
 %   internal memory (RAM) of the instrument instead of the SD card. 
 % <data> in response code refers to the specific measurement data set returned based on the 
 % data code sent to the instrument. Refer to the Data Code section for specific information. 
-    command = "R";
-    if ~strcmp(camera.Terminator,"CR")
-        configureTerminator(camera,"CR");
+    command = 'R';
+    if ~strcmp(camera.Terminator,'CR')
+        configureTerminator(camera,'CR');
     end
     response = writeread(camera,command);
 end
