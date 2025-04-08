@@ -1,9 +1,5 @@
 function response = measure(camera,specifier,user_input)
 
-    if ~strcmp(camera.Terminator,'CR')
-        configureTerminator(camera,'CR');
-    end
-
     switch specifier
 
         % Purpose: Measure frequency of light source 
@@ -22,7 +18,9 @@ function response = measure(camera,specifier,user_input)
             command = append('M',num2str(user_input));
     
     end
-
-    response = writeread(camera,command);
+    write(camera,'M','char');
+    write(camera,num2str(user_input),'char');
+    write(camera,camera.Terminator{2},'string');
+    response = readline(camera);
 end
 

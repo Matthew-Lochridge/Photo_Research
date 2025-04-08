@@ -3,10 +3,6 @@ function response = update_setup(camera,specifier,user_input)
 % Syntax: S[specifier][CR] 
 % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
 
-    if ~strcmp(camera.Terminator,'CR')
-        configureTerminator(camera,'CR');
-    end
-
     switch specifier
 
         % Purpose: Set LCD backlight level  
@@ -221,6 +217,5 @@ function response = update_setup(camera,specifier,user_input)
             command = 'ZResetSetup';
 
     end
-
     response = writeread(camera,command);
 end

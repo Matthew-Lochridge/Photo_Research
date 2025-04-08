@@ -8,9 +8,6 @@ function response = download_data(camera,data_code)
     if nargin == 2
         command = append(command,num2str(data_code));
     end
-    if ~strcmp(camera.Terminator,'CR')
-        configureTerminator(camera,'CR');
-    end
     response = writeread(camera,command);
 end
 

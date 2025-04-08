@@ -1,13 +1,10 @@
-addpath('Codes\','Configuration\','Operation\');
+addpath('Codes\','Operation\');
 
-measurements = {};
-
-camera = serialport('COM4',2400,'FlowControl','hardware')
+camera = serialport('COM4',2400,'FlowControl','hardware','Timeout',20)
+configureTerminator(camera,'CR/LF','CR');
 enter_remote_mode(camera);
-model = parse_data(measure(camera,111));
-camera.Tag = model.model;
 
-
+%response = measure(camera,'data_code',5)
 
 exit_remote_mode(camera);
 clear camera;
