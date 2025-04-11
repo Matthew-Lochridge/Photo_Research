@@ -1,4 +1,4 @@
-function response = recall_measurement(camera,data_code,measurement_id,file_name)
+function response = recall(camera,data_code,measurement_id,file_name)
 % Purpose: Recall stored measurement data from the PR-6XX 
 % Syntax: R<data code>,<Measurement #>,<filename.ext>[CR] 
 % Response: 0000,<data>[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 

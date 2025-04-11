@@ -15,7 +15,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,1.865e+01,0.4035,0.4202
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.Y = data_cell{3};
             data_struct.x = data_cell{4};
             data_struct.y = data_cell{5};
@@ -32,7 +32,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,6.136e+01,1.865e+01,2.681e+01
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.X = data_cell{3};
             data_struct.Y = data_cell{4};
             data_struct.Z = data_cell{5};
@@ -49,7 +49,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,1.865e+01,0.2231,0.5227
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.Y = data_cell{3};
             data_struct.u_prime = data_cell{4};
             data_struct.v_prime = data_cell{5};
@@ -66,10 +66,10 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,1.865e+01,3757,0.0129
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.Y = data_cell{3};
             data_struct.CCT = data_cell{4};
-            data_struct.locus_dev = data_cell{5};
+            data_struct.locus_deviation = data_cell{5};
 
         case 5 % status, units, Peak Wavelength, Integrated Power, Integrated Photon, WL, Spectral Data at each WL
         % Output Format: qqqqq,UUUU,w.wwwe+eee,i.iiie-ee,p.pppe+ee CRLF
@@ -91,7 +91,12 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   388,8.989e-06 
         %   390,1.127e-05
 
-
+            data_struct.error_code = data_cell{1};
+            data_struct.unit_sys_code = data_cell{2};
+            data_struct.wl_peak = data_cell{3};
+            data_struct.radiometric_int = data_cell{4};
+            data_struct.photon_radiometric_int = data_cell{5};
+            % the rest is parsed in measure() and/or download()
 
         case 6 % status, units, Photometric brightness, CIE 1931 x, y, CIE 1976 u’, v'
         % Output Format: qqqqq,UUUU,Y.YYYe+ee,x.xxxx,y.yyyy,u’.u’u’u’u’,v’.v’v’v’v’ CRLF
@@ -107,7 +112,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,2.041e+01,0.4089,0.4151,0.2283,0.5215
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.Y = data_cell{3};
             data_struct.x = data_cell{4};
             data_struct.y = data_cell{5};
@@ -126,7 +131,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,2.646e+03,0.2081,0.3519
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.Y = data_cell{3};
             data_struct.u = data_cell{4};
             data_struct.v = data_cell{5};
@@ -144,7 +149,8 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   3483 
         %   3459 
 
-
+            data_struct.error_code = data_cell{1}; 
+            % the rest is parsed in measure() and/or download()
         
         case 9 % status, Raw (uncorrected) Dark Current per pixel
         % Output Format: qqqqq, CRLF, ddddd CRLF, ddddd CRLF, ddddd CRLF
@@ -159,7 +165,8 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   131 
         %   123 
 
-
+            data_struct.error_code = data_cell{1}; 
+            % the rest in parsed in measure() and/or download()
 
         case 11 % status, units, Scotopic Brightness
         % Output Format: qqqqq,UUUU,S.SSSe+ee CRLF
@@ -171,7 +178,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,3.668e+01
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.S = data_cell{3};
 
         case 12 % status, units, Photometric brightness, CIE 1931 x, y, CIE 1960u, v
@@ -188,7 +195,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,2.041e+01,0.4089,0.4151,0.2283,0.3477
             
             data_struct.error_code = data_cell{1};
-            data_struct.unit_code = data_cell{2};
+            data_struct.unit_sys_code = data_cell{2};
             data_struct.Y = data_cell{3};
             data_struct.x = data_cell{4};
             data_struct.y = data_cell{5};
@@ -273,9 +280,9 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,0,MS-75,Primary,Luminance,Radiance
             
             data_struct.error_code = data_cell{1};
-            data_struct.accessory_id = data_cell{2};
-            data_struct.accessory_name = data_cell{3};
-            data_struct.accessory_type = data_cell{4};
+            data_struct.accessory.id = data_cell{2};
+            data_struct.accessory.name = data_cell{3};
+            data_struct.accessory.type = data_cell{4};
             data_struct.photometry_mode = data_cell{5};
             data_struct.radiometry_mode = data_cell{6};
 
@@ -290,11 +297,6 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   00000,1,1/2 deg,0.00
         %   00000,2,1/4 deg,0.00
         %   00000,3,1/8 deg,0.00
-
-            data_struct.error_code = data_cell{1};
-            data_struct.aperture_id = data_cell{2};
-            data_struct.aperture_name = data_cell{3};
-            data_struct.effective_bw = data_cell{4};
 
         case 120 % status, Hardware configuration
         % Output Format: qqqqq,pp,bw,bb,ee,ii,nrp,frp,lrp CRLF
@@ -312,11 +314,11 @@ function data_struct = parse_data(data_struct,data_code,data_string)
             
             data_struct.error_code = data_cell{1};
             data_struct.num_points = data_cell{2};
-            data_struct.bandwidth = data_cell{3};
+            data_struct.bw = data_cell{3};
             data_struct.wl_start = data_cell{4};
             data_struct.wl_stop = data_cell{5};
             data_struct.wl_step = data_cell{6};
-            data_struct.num_pixels = data_cell{7};
+            data_struct.num_pix = data_cell{7};
             data_struct.pix_start = data_cell{8};
             data_struct.pix_stop = data_cell{9};
 
@@ -326,7 +328,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         % Output Example:
         %   6
 
-            data_struct.num_stored_measurements = data_cell{1};
+            data_struct.num_measurements = data_cell{1};
 
         case 402 % status, Directory of stored measurements in RAM
         % Output Format: qqqqq,dt,tm CRLF
@@ -338,7 +340,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %   2,01-30-2007 13:49:09
         %   3,01-30-2007 13:51:03
 
-
+            % parsed in measure() and/or download()
 
         case 411 % status, List of files in SD Card and number of stored measurements per file
         % Output Format: filename.ext,qqqqq CRLF
@@ -360,9 +362,9 @@ function data_struct = parse_data(data_struct,data_code,data_string)
         %        tm = Time
         % Output Example:
             
-            data_struct.measurement_id = data_cell{1};
-            data_struct.measurement_date = data_cell{2};
-            data_struct.measurement_time = data_cell{3};
+            data_struct.measurement.id = str2num(data_cell{1});
+            data_struct.measurement.date = data_cell{2};
+            data_struct.measurement.time = data_cell{3};
 
         case 502 % status, Current System Timing & Environment Info
 
@@ -385,7 +387,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
             data_struct.addon_1_code = data_cell{3};
             data_struct.addon_2_code = data_cell{4};
             data_struct.addon_3_code = data_cell{5};
-            data_struct.aperture_code = data_cell{6};
+            data_struct.aperture.id = data_cell{6};
             data_struct.unit_sys_code = data_cell{7};
             data_struct.exposure_mode_code = data_cell{8};
             data_struct.exposure_time = data_cell{9};
@@ -410,7 +412,7 @@ function data_struct = parse_data(data_struct,data_code,data_string)
             data_struct.addon_1 = data_cell{3};
             data_struct.addon_2 = data_cell{4};
             data_struct.addon_3 = data_cell{5};
-            data_struct.aperture = data_cell{6};
+            data_struct.aperture.name = data_cell{6};
             data_struct.unit_sys = data_cell{7};
             data_struct.exposure_mode = data_cell{8};
             data_struct.exposure_time = data_cell{9};
