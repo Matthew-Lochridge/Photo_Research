@@ -1,12 +1,8 @@
-addpath('Codes\','Operation\');
+addpath('Codes\');
 
-camera = serialport('COM4',2400,'FlowControl','hardware','Timeout',20)
-configureTerminator(camera,'CR/LF','CR');
-enter_remote_mode(camera)
-data = parse_data(measure(camera,'data_code',120));
+[camera,~] = initialize_camera('COM4',20);
+data = struct();
+[data, error_code] = send_command(camera,data,'M',5);
 
-
-%response = measure(camera,'data_code',5)
-
-exit_remote_mode(camera);
+[~,~] = send_command(camera,[],'Q',[],[],[],[]);
 clear camera;
