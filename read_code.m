@@ -1,5 +1,5 @@
 function output = read_code(field,code)
-    output = '';
+    output = ''; % default output
     switch field
 
         case 'Accessory'

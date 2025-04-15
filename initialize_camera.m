@@ -10,4 +10,3 @@ function [camera,status] = initialize_camera(port,timeout)
     write(camera,'O','char');
     status = read(camera,12,'char'); % response = ' REMOTE MODE'
 end
-
