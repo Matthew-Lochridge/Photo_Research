@@ -736,7 +736,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
     %        1 = Never close (always open)  
     % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
 
-        command_string = append(command,input_setting);
+        command_string = append(command,num2str(input_setting));
         error_code = str2num(writeread(camera,command_string));
 
     elseif command == 'Z' && ~isempty(input_setting)
