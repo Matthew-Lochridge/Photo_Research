@@ -1,13 +1,14 @@
 function [data, error_code] = send_command(camera,data,command,data_code,measurement_id,file_name,input_setting)
 
-    if command == 'Q'
+    error_code = []; % default output
+
+    if strcmp(command,'Q')
     % Q Command
     % Purpose: Quit (Exit) Remote mode  
     % Syntax: Q 
     % Response: None 
 
-        write(camera,'Q','char');
-        error_code = [];
+        write(camera,command,'char');
     
     elseif contains('CEFI',command)
     % C Command
@@ -31,8 +32,8 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
     % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
 
         response = split(writeread(camera,command),',');
-        error_code = str2num(response{1});
-        if command == 'F'
+        error_code = str2double(response{1});
+        if strcmp(command,'F')
             data.source_freq = response{2};
         end
 
@@ -69,7 +70,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
     % data code sent to the instrument. Refer to the Data Code section for specific information. 
 
         command_string = append(command,num2str(data_code));
-        if command == 'R'
+        if strcmp(command,'R')
             if ~isempty(measurement_id)
                 command_string = append(command_string,',',num2str(measurement_id));
             end
@@ -79,6 +80,12 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
         end
 
         switch data_code
+
+            case 0 % status (Write to disk most recent, unsaved, measurement)
+                
+                if contains('DM',command)
+                    error_code = str2double(writeread(camera,command_string));
+                end
 
             case 1 % status, units, Photometric brightness, CIE 1931 x,y
                 % Output Format: qqqqq,UUUU,Y.YYYe+ee,x.xxxx,y.yyyy CRLF
@@ -92,11 +99,11 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 %   00000,0,1.865e+01,0.4035,0.4202
 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.Y = str2num(response{3});
-                data.x = str2num(response{4});
-                data.y = str2num(response{5});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.Y = str2double(response{3});
+                data.x = str2double(response{4});
+                data.y = str2double(response{5});
     
             case 2 % status, units, CIE 1931 Tristimulus Values
             % Output Format: qqqqq,UUUU,X.XXXe+ee,Y.YYYe+ee,Z.ZZZe+ee CRLF
@@ -110,11 +117,11 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,6.136e+01,1.865e+01,2.681e+01
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.X = str2num(response{3});
-                data.Y = str2num(response{4});
-                data.Z = str2num(response{5});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.X = str2double(response{3});
+                data.Y = str2double(response{4});
+                data.Z = str2double(response{5});
     
             case 3 % status, units, Photometric brightness, CIE 1976 u’, v’
             % Output Format: qqqqq,U,Y.YYYe+ee,u’.u’u’u’,v’.v’v’v’ CRLF
@@ -128,11 +135,11 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,1.865e+01,0.2231,0.5227
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.Y = str2num(response{3});
-                data.u_prime = str2num(response{4});
-                data.v_prime = str2num(response{5});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.Y = str2double(response{3});
+                data.u_prime = str2double(response{4});
+                data.v_prime = str2double(response{5});
     
             case 4 % status, units, Photometric brightness, Correlated Color Temperature, Deviation from Planck's Locus in 1960 u,v units
             % Output Format: qqqqq,U,Y.YYYe+ee,CCCCC,d.dddd CRLF
@@ -146,11 +153,11 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,1.865e+01,3757,0.0129
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.Y = str2num(response{3});
-                data.CCT = str2num(response{4});
-                data.locus_deviation = str2num(response{5});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.Y = str2double(response{3});
+                data.CCT = str2double(response{4});
+                data.locus_deviation = str2double(response{5});
     
             case 5 % status, units, Peak Wavelength, Integrated Power, Integrated Photon, WL, Spectral Data at each WL
             % Output Format: qqqqq,UUUU,w.wwwe+eee,i.iiie-ee,p.pppe+ee CRLF
@@ -172,19 +179,19 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   388,8.989e-06 
             %   390,1.127e-05
     
-                data = send_command(camera,data,'D',120,[],[]);
+                data = send_command(camera,data,'D',120,[],[],[]);
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.wl_peak = str2num(response{3});
-                data.integrated_power = str2num(response{4});
-                data.integrated_photon = str2num(response{5});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.wl_peak = str2double(response{3});
+                data.integrated_power = str2double(response{4});
+                data.integrated_photon = str2double(response{5});
                 data.wl = [];
                 data.wl_magnitude = [];
-                for n = 1:data.num_wl
+                for index = 1:data.num_wl
                     spectrum = split(readline(camera),',');
-                    data.wl(n) = str2num(spectrum(1));
-                    data.wl_magnitude(n) = str2num(spectrum(2));
+                    data.wl(index) = str2double(spectrum(1));
+                    data.wl_magnitude(index) = str2double(spectrum(2));
                 end
     
             case 6 % status, units, Photometric brightness, CIE 1931 x, y, CIE 1976 u’, v'
@@ -201,13 +208,13 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,2.041e+01,0.4089,0.4151,0.2283,0.5215
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.Y = str2num(response{3});
-                data.x = str2num(response{4});
-                data.y = str2num(response{5});
-                data.u_prime = str2num(response{6});
-                data.v_prime = str2num(response{7});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.Y = str2double(response{3});
+                data.x = str2double(response{4});
+                data.y = str2double(response{5});
+                data.u_prime = str2double(response{6});
+                data.v_prime = str2double(response{7});
     
             case 7 % status, units, Photometric brightness, CIE 1960 x, y
             % Output Format: qqqqq,UUUU,Y.YYYe+ee,u.uuuu,v.vvvv CRLF
@@ -221,11 +228,11 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,2.646e+03,0.2081,0.3519
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.Y = str2num(response{3});
-                data.u = str2num(response{4});
-                data.v = str2num(response{5});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.Y = str2double(response{3});
+                data.u = str2double(response{4});
+                data.v = str2double(response{5});
     
             case 8 % status, Raw (uncorrected) light per pixel
             % Output Format: qqqqq, CRLF, lllll CRLF, lllll CRLF, lllll CRLF …………………
@@ -240,12 +247,12 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   3483 
             %   3459 
     
-                data = send_command(camera,data,'D',120,[],[]);
+                data = send_command(camera,data,'D',120,[],[],[]);
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
+                error_code = str2double(response{1});
                 data.raw_pixel_light = [];
-                for n = 1:data.num_pix % loop over all pixels
-                    data.raw_pixel_light(n) = str2num(readline(camera));
+                for index = 1:data.num_pix % loop over all pixels
+                    data.raw_pixel_light(index) = str2double(readline(camera));
                 end
             
             case 9 % status, Raw (uncorrected) Dark Current per pixel
@@ -261,12 +268,12 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   131 
             %   123 
     
-                data = send_command(camera,data,'D',120,[],[]);
+                data = send_command(camera,data,'D',120,[],[],[]);
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
+                error_code = str2double(response{1});
                 data.raw_pixel_dark = [];
-                for n = 1:num_pix % loop over all pixels
-                    data.raw_pixel_dark(n) = str2num(readline(camera));
+                for index = 1:data.num_pix % loop over all pixels
+                    data.raw_pixel_dark(index) = str2double(readline(camera));
                 end
     
             case 11 % status, units, Scotopic Brightness
@@ -279,9 +286,9 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,3.668e+01
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.S = str2num(response{3});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.S = str2double(response{3});
     
             case 12 % status, units, Photometric brightness, CIE 1931 x, y, CIE 1960u, v
             % Output Format: qqqqq,UUUU,Y.YYYe+ee,x.xxxx,y.yyyy,u.uuuu,v.vvvv CRLF
@@ -297,13 +304,13 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,2.041e+01,0.4089,0.4151,0.2283,0.3477
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.unit_sys_code = str2num(response{2});
-                data.Y = str2num(response{3});
-                data.x = str2num(response{4});
-                data.y = str2num(response{5});
-                data.u = str2num(response{6});
-                data.v = str2num(response{7});
+                error_code = str2double(response{1});
+                data.unit_sys_code = str2double(response{2});
+                data.Y = str2double(response{3});
+                data.x = str2double(response{4});
+                data.y = str2double(response{5});
+                data.u = str2double(response{6});
+                data.v = str2double(response{7});
     
             case 13 % status, Gain description, exposure time in milliseconds
             % Output Format: qqqqq,Gain description,nnnnnn msec CRLF
@@ -314,7 +321,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,Fast,16500 msec
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
+                error_code = str2double(response{1});
                 data.gain = response{2};
                 data.exposure_time = response{3};
     
@@ -327,7 +334,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,User Sync,120.00 Hertz
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
+                error_code = str2double(response{1});
                 data.sync_mode = response{2};
                 data.sync_freq = response{3};
     
@@ -339,8 +346,8 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,67065106
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.serial_num = str2num(response{2});
+                error_code = str2double(response{1});
+                data.serial_num = response{2};
     
             case 111 % status, Instrument Name
             % Output Format: qqqqq,mmmmmm CRLF
@@ -350,7 +357,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,PR-655
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
+                error_code = str2double(response{1});
                 data.model = response{2};
     
             case 112 % status, Number of Accessories, Number of Apertures
@@ -362,9 +369,9 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             % 00000,1,4
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.num_accessories = str2num(response{2});
-                data.num_apertures = str2num(response{3});
+                error_code = str2double(response{1});
+                data.num_accessories = str2double(response{2});
+                data.num_apertures = str2double(response{3});
     
             case 114 % status, Software Version
             % Output Format: qqqqq,vvvvv CRLF
@@ -374,7 +381,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             % 00000,2.22D
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
+                error_code = str2double(response{1});
                 data.software_version = response{2};
     
             case 116 % status, Accessory List
@@ -389,8 +396,8 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,MS-75,Primary,Luminance,Radiance
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.accessory.id = str2num(response{2});
+                error_code = str2double(response{1});
+                data.accessory.id = str2double(response{2});
                 data.accessory.name = response{3};
                 data.accessory.type = response{4};
                 data.photometry_mode = response{5};
@@ -408,16 +415,16 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,2,1/4 deg,0.00
             %   00000,3,1/8 deg,0.00
 
-                data = send_command(camera,data,'D',112,[],[]);
+                data = send_command(camera,data,'D',112,[],[],[]);
                 writeline(camera,command_string);
                 data.aperture = {};
-                for n = 1:data.num_apertures
+                for index = 1:data.num_apertures
                     response = split(readline(camera),',');
-                    data.aperture{n} = struct();
-                    error_code = str2num(response{1});
-                    data.aperture{n}.id = str2num(response{2});
-                    data.aperture{n}.name = response{3};
-                    data.aperture{n}.bw_eff = str2num(response{4});
+                    data.aperture{index} = struct();
+                    error_code = str2double(response{1});
+                    data.aperture{index}.id = str2double(response{2});
+                    data.aperture{index}.name = response{3};
+                    data.aperture{index}.bw_eff = str2double(response{4});
                 end
     
             case 120 % status, Hardware configuration
@@ -435,15 +442,15 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,201,0.00,380,780,2,256,7,247
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.num_wl = str2num(response{2});
-                data.bw = str2num(response{3});
-                data.wl_start = str2num(response{4});
-                data.wl_stop = str2num(response{5});
-                data.wl_step = str2num(response{6});
-                data.num_pix = str2num(response{7});
-                data.pix_start = str2num(response{8});
-                data.pix_stop = str2num(response{9});
+                error_code = str2double(response{1});
+                data.num_wl = str2double(response{2});
+                data.bw = str2double(response{3});
+                data.wl_start = str2double(response{4});
+                data.wl_stop = str2double(response{5});
+                data.wl_step = str2double(response{6});
+                data.num_pix = str2double(response{7});
+                data.pix_start = str2double(response{8});
+                data.pix_stop = str2double(response{9});
     
             case 401 % status, Number of stored measurements in RAM
             % Output Format: qqqqq CRLF
@@ -452,7 +459,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   6
     
                 response = split(writeread(camera,command_string),',');
-                data.num_measurements = str2num(response{1});
+                data.RAM.num_measurements = str2double(response{1});
     
             case 402 % status, Directory of stored measurements in RAM
             % Output Format: qqqqq,dt,tm CRLF
@@ -464,16 +471,16 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   2,01-30-2007 13:49:09
             %   3,01-30-2007 13:51:03
     
-                data = send_command(camera,data,'D',401,[],[]);
+                data = send_command(camera,data,'D',401,[],[],[]);
                 writeline(camera,command_string);
-                data.measurement = {};
-                for n = 1:data.num_measurements
-                    data.measurement{n} = struct();
+                data.RAM.measurements = {};
+                for index = 1:data.RAM.num_measurements
+                    data.RAM.measurements{index} = struct();
                     response = split(readlines(camera),',');
-                    data.measurement{n}.id = str2num(response(1));
+                    data.RAM.measurements{index}.id = str2double(response(1));
                     date_time = split(response(2),' ');
-                    data.measurement{n}.date = date_time(1);
-                    data.measurement{n}.time = date_time(2);
+                    data.RAM.measurements{index}.date = date_time(1);
+                    data.RAM.measurements{index}.time = date_time(2);
                 end
     
             case 411 % status, List of files in SD Card and number of stored measurements per file
@@ -484,7 +491,16 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   MK.mea, 1
             %   TSTSAMP.mea, 2
     
-    
+                writeline(camera,command_string);
+                data.file = {};
+                index = 1;
+                response = split(readline(camera),',');
+                while ~isempty(response)
+                    data.file{index}.name = response{1};
+                    data.file{index}.num_measurements = str2double(response{2});
+                    response = readline(camera);
+                    index = index + 1;
+                end
     
             case 412 % filename ,status, Directory of stored measurements in file 'filename' in SD card
             % Syntax: D412, ffffffff.eee 
@@ -497,9 +513,9 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             % Output Example:
                 
                 response = split(writeread(camera,command_string),',');
-                data.measurement.id = str2num(response{1});
-                data.measurement.date = response{2};
-                data.measurement.time = response{3};
+                data.file.measurements.id = str2double(response{1});
+                data.file.measurements.date = response{2};
+                data.file.measurements.time = response{3};
     
             case 502 % status, Current System Timing & Environment Info
     
@@ -518,22 +534,26 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,0,-1,-1,-1,0,0,0,0,0,1,2,0,0,0,60.00
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.primary_lens_code = str2num(response{2});
-                data.addon_1_code = str2num(response{3});
-                data.addon_2_code = str2num(response{4});
-                data.addon_3_code = str2num(response{5});
-                data.aperture.id = str2num(response{6});
-                data.unit_sys_code = str2num(response{7});
-                data.exposure_mode_code = str2num(response{8});
-                data.exposure_time = str2num(response{9});
-                data.gain_code = str2num(response{10});
-                data.cycles_num = str2num(response{11});
-                data.observer_code = str2num(response{12});
-                data.dark_mode_code = str2num(response{13});
-                data.sync_mode_code = str2num(response{14});
-                data.capture_mode_code = str2num(response{15});
-                data.sync_freq_num = str2num(response{16});
+                error_code = str2double(response{1});
+                data.primary = read_code('Primary',str2double(response{2}));
+                data.addon{1} = read_code('Addon',str2double(response{3}));
+                data.addon{2} = read_code('Addon',str2double(response{4}));
+                data.addon{3} = read_code('Addon',str2double(response{5}));
+                data.aperture = read_code('Aperture',str2double(response{6}));
+                data.unit_sys = read_code('Unit System',str2double(response{7}));
+                data.exposure_mode = read_code('Exposure Mode',str2double(response{8}));
+                if str2double(response{9}) > 0
+                    data.exposure_time = str2double(response{9});
+                else
+                    data = send_command(camera,data,'D',13,[],[],[]);
+                end
+                data.gain = read_code('Gain',str2double(response{10}));
+                data.cycles = str2double(response{11});
+                data.observer = read_code('CIE Observer',str2double(response{12}));
+                data.dark_mode = read_code('Smart Dark Mode',str2double(response{13}));
+                data.sync_mode = read_code('Sync Mode',str2double(response{14}));
+                data.sensitivity = read_code('Sensitivity',str2double(response{15}));
+                data.sync_freq = str2double(response{16});
     
             case 602 % status, Current Setup Report, Verbose
             % Output Format: Current set report with text labels.
@@ -544,12 +564,12 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,MS-75,None,None,None,1 deg,English,Adaptive,0 msec,Normal,1 cycles,2 deg,No Smart Dark,No Sync,Standard Sensitivity,60.00 Hertz
                 
                 response = split(writeread(camera,command_string),',');
-                error_code = str2num(response{1});
-                data.primary_lens = response{2};
-                data.addon_1 = response{3};
-                data.addon_2 = response{4};
-                data.addon_3 = response{5};
-                data.aperture.name = response{6};
+                error_code = str2double(response{1});
+                data.primary = response{2};
+                data.addon{1} = response{3};
+                data.addon{2} = response{4};
+                data.addon{3} = response{5};
+                data.aperture = response{6};
                 data.unit_sys = response{7};
                 data.exposure_mode = response{8};
                 data.exposure_time = response{9};
@@ -558,7 +578,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 data.observer = response{12};
                 data.dark_mode = response{13};
                 data.sync_mode = response{14};
-                data.capture_mode = response{15};
+                data.sensitivity = response{15};
                 data.sync_freq = response{16};
         end
 
@@ -578,9 +598,9 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
     % If L[CR] is issued with an empty string, the current description is returned. 
 
         command_string = append(command,num2str(input_setting));
-        error_code = str2num(writeread(camera,command_string));
+        error_code = str2double(writeread(camera,command_string));
 
-    elseif command == 'X' && ~isempty(input_setting)
+    elseif strcmp(command,'X') && ~isempty(input_setting)
     % X Command
     % Purpose: Set the display contrast . 
     % Syntax: Xnnn where nnn is the contrast in % - Range 0 to 100% 
@@ -589,7 +609,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
 
         command_string = append(command,num2str(input_setting));
         write(camera,command_string,'char');
-        error_code = str2num(readline(camera));
+        error_code = str2double(readline(camera));
 
     elseif (contains('BL',command) || contains(command,'S')) && ~isempty(input_setting)
     % B Command
@@ -737,9 +757,9 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
     % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
 
         command_string = append(command,num2str(input_setting));
-        error_code = str2num(writeread(camera,command_string));
+        error_code = str2double(writeread(camera,command_string));
 
-    elseif command == 'Z' && ~isempty(input_setting)
+    elseif strcmp(command,'Z') && ~isempty(input_setting)
         % Purpose: Enable Reset Command Mode 
         % Syntax: ZEnableReset 
         % Response: 00000,Reset Commands Enabled  
@@ -753,8 +773,6 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
         if strcmp(input_setting,'EnableReset')
             response = split(readline(camera),',');
             error_code = response{1};
-        else
-            error_code = [];
         end
     end
 end

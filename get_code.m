@@ -1,13 +1,16 @@
 function code = get_code(field,user_input)
     code = []; % default output
     switch field
-        
-        case 'Accessory'
-
-
+        case 'Primary'
+            switch user_input
+                case 'MS-75'
+                    code = 0;
+            end
         case 'Addon'
-
-
+            switch user_input
+                case 'None'
+                    code = -1;
+            end
         case 'Aperture'
             switch user_input
                 case '1 deg'
@@ -19,7 +22,6 @@ function code = get_code(field,user_input)
                 case '1/8 deg'
                     code = 3;
             end
-
         case 'Smart Dark Mode'
             switch user_input
                 case 'Disabled'
@@ -27,19 +29,17 @@ function code = get_code(field,user_input)
                 case 'Enabled'
                     code = 1;
             end
-
         case 'Gain'
             switch user_input
                 case 'Normal'
                     code = 0;
-                case '1X Fast'
+                case 'Fast'
                     code = 1;
                 case '2X Fast'
                     code = 2;
                 case '4X Fast'
                     code = 3;
             end
-
         case 'Sensitivity'
             switch user_input
                 case 'Standard'
@@ -47,7 +47,11 @@ function code = get_code(field,user_input)
                 case 'Extended'
                     code = 1;
             end
-
+        case 'Exposure Mode'
+            switch user_input
+                case 'Adaptive'
+                    code = 0;
+            end
         case 'Shutter Mode'
             switch user_input
                 case 'Close after measurement'
@@ -55,7 +59,6 @@ function code = get_code(field,user_input)
                 case 'Always open'
                     code = 1;
             end
-
         case 'Sync Mode'
             switch user_input
                 case 'No Sync'
@@ -65,7 +68,6 @@ function code = get_code(field,user_input)
                 case 'User Frequency'
                     code = 2;
             end
-
         case 'CIE Observer'
             switch user_input
                 case '2 deg'
@@ -73,7 +75,6 @@ function code = get_code(field,user_input)
                 case '10 deg'
                     code = 10;
             end
-
         case 'Unit System'
             switch user_input
                 case 'English'
@@ -81,7 +82,6 @@ function code = get_code(field,user_input)
                 case 'Metric'
                     code = 1;
             end
-
         case 'Unit'
             switch user_input
                 case 'fL' % Luminance (English)
@@ -105,6 +105,9 @@ function code = get_code(field,user_input)
                 case 'W' % Radiant Flux
                     code = 14;
             end
+        case 'Data'
+            switch user_input
 
+            end
     end
 end
