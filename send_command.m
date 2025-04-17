@@ -547,13 +547,13 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 else
                     data = send_command(camera,data,'D',13,[],[],[]);
                 end
-                data.gain = read_code('Gain',str2double(response{10}));
-                data.cycles = str2double(response{11});
-                data.observer = read_code('CIE Observer',str2double(response{12}));
-                data.dark_mode = read_code('Smart Dark Mode',str2double(response{13}));
-                data.sync_mode = read_code('Sync Mode',str2double(response{14}));
-                data.sensitivity = read_code('Sensitivity',str2double(response{15}));
-                data.sync_freq = str2double(response{16});
+                % data.gain = read_code('Gain',str2double(response{10}));
+                data.cycles = str2double(response{10});
+                data.observer = read_code('CIE Observer',str2double(response{11}));
+                % data.dark_mode = read_code('Smart Dark Mode',str2double(response{13}));
+                data.sync_mode = read_code('Sync Mode',str2double(response{12}));
+                % data.sensitivity = read_code('Sensitivity',str2double(response{15}));
+                data.sync_freq = str2double(response{13});
     
             case 602 % status, Current Setup Report, Verbose
             % Output Format: Current set report with text labels.
