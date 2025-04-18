@@ -1,7 +1,6 @@
 function [data, error_code] = send_command(camera,data,command,data_code,measurement_id,file_name,input_setting)
-
     error_code = []; % default output
-
+    
     if strcmp(command,'Q')
     % Q Command
     % Purpose: Quit (Exit) Remote mode  
@@ -100,7 +99,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.Y = str2double(response{3});
                 data.x = str2double(response{4});
                 data.y = str2double(response{5});
@@ -118,7 +117,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.X = str2double(response{3});
                 data.Y = str2double(response{4});
                 data.Z = str2double(response{5});
@@ -136,7 +135,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.Y = str2double(response{3});
                 data.u_prime = str2double(response{4});
                 data.v_prime = str2double(response{5});
@@ -154,7 +153,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.Y = str2double(response{3});
                 data.CCT = str2double(response{4});
                 data.locus_deviation = str2double(response{5});
@@ -179,10 +178,10 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   388,8.989e-06 
             %   390,1.127e-05
     
-                data = send_command(camera,data,'D',120,[],[],[]);
+                [data,error_code] = send_command(camera,data,'D',120,[],[],[]);
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.wl_peak = str2double(response{3});
                 data.integrated_power = str2double(response{4});
                 data.integrated_photon = str2double(response{5});
@@ -209,7 +208,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.Y = str2double(response{3});
                 data.x = str2double(response{4});
                 data.y = str2double(response{5});
@@ -229,7 +228,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.Y = str2double(response{3});
                 data.u = str2double(response{4});
                 data.v = str2double(response{5});
@@ -247,12 +246,12 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   3483 
             %   3459 
     
-                data = send_command(camera,data,'D',120,[],[],[]);
+                [data,error_code] = send_command(camera,data,'D',120,[],[],[]);
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.raw_pixel_light = [];
+                data.raw_light = [];
                 for index = 1:data.num_pix % loop over all pixels
-                    data.raw_pixel_light(index) = str2double(readline(camera));
+                    data.raw_light(index) = str2double(readline(camera));
                 end
             
             case 9 % status, Raw (uncorrected) Dark Current per pixel
@@ -268,12 +267,12 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   131 
             %   123 
     
-                data = send_command(camera,data,'D',120,[],[],[]);
+                [data,error_code] = send_command(camera,data,'D',120,[],[],[]);
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.raw_pixel_dark = [];
+                data.raw_dark = [];
                 for index = 1:data.num_pix % loop over all pixels
-                    data.raw_pixel_dark(index) = str2double(readline(camera));
+                    data.raw_dark(index) = str2double(readline(camera));
                 end
     
             case 11 % status, units, Scotopic Brightness
@@ -287,7 +286,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.S = str2double(response{3});
     
             case 12 % status, units, Photometric brightness, CIE 1931 x, y, CIE 1960u, v
@@ -305,7 +304,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
-                data.unit_sys_code = str2double(response{2});
+                data.unit_sys = read_code('Unit System',str2double(response{2}));
                 data.Y = str2double(response{3});
                 data.x = str2double(response{4});
                 data.y = str2double(response{5});
@@ -323,7 +322,8 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
                 data.gain = response{2};
-                data.exposure_time = response{3};
+                exposure = split(response{3},' ');
+                data.exposure_time = str2double(exposure{1});
     
             case 14 % status, Sync mode description, sync period in milliseconds
             % Output Format: qqqqq,Sync mode description,nnnnnn Hertz CRLF
@@ -336,7 +336,8 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 response = split(writeread(camera,command_string),',');
                 error_code = str2double(response{1});
                 data.sync_mode = response{2};
-                data.sync_freq = response{3};
+                freq = split(response{3},' ');
+                data.sync_freq = freq{1};
     
             case 110 % status, Instrument Serial Number
             % Output Format: qqqqq,ssssssss CRLF
@@ -415,7 +416,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   00000,2,1/4 deg,0.00
             %   00000,3,1/8 deg,0.00
 
-                data = send_command(camera,data,'D',112,[],[],[]);
+                [data,error_code] = send_command(camera,data,'D',112,[],[],[]);
                 writeline(camera,command_string);
                 data.aperture = {};
                 for index = 1:data.num_apertures
@@ -471,7 +472,7 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
             %   2,01-30-2007 13:49:09
             %   3,01-30-2007 13:51:03
     
-                data = send_command(camera,data,'D',401,[],[],[]);
+                [data,error_code] = send_command(camera,data,'D',401,[],[],[]);
                 writeline(camera,command_string);
                 data.RAM.measurements = {};
                 for index = 1:data.RAM.num_measurements
@@ -542,16 +543,16 @@ function [data, error_code] = send_command(camera,data,command,data_code,measure
                 data.aperture = read_code('Aperture',str2double(response{6}));
                 data.unit_sys = read_code('Unit System',str2double(response{7}));
                 data.exposure_mode = read_code('Exposure Mode',str2double(response{8}));
-                if str2double(response{9}) > 0
-                    data.exposure_time = str2double(response{9});
-                else
+                if strcmp(data.exposure_mode,'Adaptive')
                     data = send_command(camera,data,'D',13,[],[],[]);
+                else
+                    data.exposure_time = str2double(response{9});
                 end
                 % data.gain = read_code('Gain',str2double(response{10}));
                 data.cycles = str2double(response{10});
-                data.observer = read_code('CIE Observer',str2double(response{11}));
+                data.observer = read_code('CIE Observer',str2double(response{12}));
                 % data.dark_mode = read_code('Smart Dark Mode',str2double(response{13}));
-                data.sync_mode = read_code('Sync Mode',str2double(response{12}));
+                data.sync_mode = read_code('Sync Mode',str2double(response{11}));
                 % data.sensitivity = read_code('Sensitivity',str2double(response{15}));
                 data.sync_freq = str2double(response{13});
     

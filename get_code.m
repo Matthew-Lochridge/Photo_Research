@@ -107,7 +107,20 @@ function code = get_code(field,user_input)
             end
         case 'Data'
             switch user_input
+                case 'Raw light per pixel'
+                    code = 8;
+                case 'Raw dark per pixel'
+                    code = 9;
+                case 'Spectrum'
+                    code = 5;
+                case 'CIE 1931 tristimulus'
 
+                case 'CIE 1931 x, y'
+                    code = 1;
+                case 'CIE 1960 u, v'
+
+                case "CIE 1976 u', v'"
+                    code = 3;
             end
     end
 end
