@@ -86,7 +86,7 @@ function output = read_code(field,code)
             switch code
 
             end
-        case 'Error'
+        case 'Status'
             switch code
                 case 0
                     output = 'No error.';
