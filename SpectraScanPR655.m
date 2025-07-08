@@ -16,20 +16,19 @@ classdef SpectraScanPR655 < handle
         addon3
         aperture
         unit_system
-        exposure_mode
-        speed_mode
         cycles_to_average {mustBeNumeric}
         CIE_observer
-        dark_mode
         sync_mode
         shutter_mode
         photometry_mode
         radiometry_mode
+        measurement_label
+        data = struct();
     end
 
     methods
-        function camera = SpectraScanPR655(serial_port)
-            camera.serial_device = serialport(serial_port, 2400, 'FlowControl', 'hardware');
+        function camera = SpectraScanPR655(serial_port, baud_rate)
+            camera.serial_device = serialport(serial_port, baud_rate, 'FlowControl', 'hardware');
             configureTerminator(camera.serial_device, 'CR/LF', 'CR');
         end
 
@@ -122,108 +121,134 @@ classdef SpectraScanPR655 < handle
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [Y, x, y, R, G, B, status] = get_CIE_1931(camera, command)
+        function [fig, ax, status] = get_CIE_1931(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M1'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D1'), ','));
             end
             camera.status_code = response(1);
-            Y = response(3);
-            x = response(4);
-            y = response(5);
+            camera.data.Y = response(3);
+            camera.data.x = response(4);
+            camera.data.y = response(5);
             response = str2double(split(writeread(camera.serial_device, 'D2'), ','));
             camera.status_code = response(1);
-            R = response(3);
-            G = response(4);
-            B = response(5);
+            camera.data.R = response(3);
+            camera.data.G = response(4);
+            camera.data.B = response(5);
+            fig = figure;
+            plotChromaticity('ColorSpace','xy');
+            hold on;
+            plot(camera.data.x, camera.data.y, '*k');
+            hold off;
+            title('CIE 1931');
+            ax = gca;
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [Y, u, v, status] = get_CIE_1960(camera, command)
+        function [fig, ax, status] = get_CIE_1960(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M7'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D7'), ','));
             end
             camera.status_code = response(1);
-            Y = response(3);
-            u = response(4);
-            v = response(5);
+            camera.data.Y = response(3);
+            camera.data.u = response(4);
+            camera.data.v = response(5);
+
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [Y, u_prime, v_prime, status] = get_CIE_1976(camera, command)
+        function [fig, ax, status] = get_CIE_1976(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M6'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D6'), ','));
             end
             camera.status_code = response(1);
-            Y = response(3);
-            u_prime = response(4);
-            v_prime = response(5);
+            camera.data.Y = response(3);
+            camera.data.u_prime = response(4);
+            camera.data.v_prime = response(5);
+            fig = figure;
+            plotChromaticity('ColorSpace','uv');
+            hold on;
+            plot(camera.data.u_prime, camera.data.v_prime, '*k');
+            hold off;
+            title('CIE 1976');
+            ax = gca;
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [Y, CCT, Planck_locus_deviation, status] = get_CCT(camera, command)
+        function [fig, ax, status] = get_CCT(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M4'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D4'), ','));
             end
             camera.status_code = response(1);
-            Y = response(3);
-            CCT = response(4);
-            Planck_locus_deviation = response(5);
+            camera.data.Y = response(3);
+            camera.data.CCT = response(4);
+            camera.data.Planck_locus_deviation = response(5);
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [peak_wavelength, integrated_radiometric, integrated_photon_radiometric, wavelengths, radiometric_spectrum, status] = get_radiometric_spectrum(camera, command)
+        function [fig, ax, status] = get_radiometric_spectrum(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M5'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D5'), ','));
             end
             camera.status_code = response(1);
-            peak_wavelength = response(3);
-            integrated_radiometric = response(4);
-            integrated_photon_radiometric = response(5);
-            wavelengths = response(6:2:end-1);
-            radiometric_spectrum = response(7:2:end);
+            camera.data.peak_wavelength = response(3);
+            camera.data.integrated_radiometric = response(4);
+            camera.data.integrated_photon_radiometric = response(5);
+            camera.data.wavelengths = response(6:2:end-1);
+            camera.data.radiometric_spectrum = response(7:2:end);
+            fig = figure;
+            plot(camera.data.wavelengths, camera.data.radiometric_spectrum);
+            xlabel('Wavelength (nm)');
+            switch camera.radiometry_mode
+                case 'Radiance'
+
+                case 'Irradiance'
+
+            end
+            ylabel('Radiometric Amplitude');
+            ax = gca;
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [S, status] = get_scotopic_brightness(camera, command)
+        function status = get_scotopic_brightness(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M11'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D11'), ','));
             end
             camera.status_code = response(1);
-            S = response(3);
+            camera.data.S = response(3);
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [raw_light, status] = get_raw_light(camera, command)
+        function status = get_raw_light(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M8'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D8'), ','));
             end
             camera.status_code = response(1);
-            raw_light = response(2:end);
+            camera.data.raw_light = response(2:end);
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [raw_dark, status] = get_raw_dark(camera, command)
+        function status = get_raw_dark(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M9'), ','));
             elseif strcmpi(command, 'Download')
                 response = str2double(split(writeread(camera.serial_device, 'D9'), ','));
             end
             camera.status_code = response(1);
-            raw_dark = response(2:end);
+            camera.data.raw_dark = response(2:end);
             status = camera.read_code('Error', camera.status_code);
         end
 
@@ -272,15 +297,16 @@ classdef SpectraScanPR655 < handle
         % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code)  
         % Note: Entry remains valid for the duration of the current Remote Mode session or until a new L command is issued. 
         % If L[CR] is issued with an empty string, the current description is returned. 
-        function status = set_measurement_description(camera, description)
-            camera.status_code = str2double(writeread(camera.serial_device, append('L', description)));
+        function status = set_measurement_label(camera, label)
+            camera.measurement_label = label;
+            camera.status_code = str2double(writeread(camera.serial_device, append('L', label)));
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [description, status] = get_measurement_description(camera)
+        function status = get_measurement_label(camera)
             response = split(writeread(camera.serial_device, 'L'), ',');
             camera.status_code = str2double(response{1});
-            description = response{2};
+            camera.measurement_label = response{2};
             status = camera.read_code('Error', camera.status_code);
         end
 
@@ -349,21 +375,6 @@ classdef SpectraScanPR655 < handle
             status = camera.read_code('Error', camera.status_code);
         end
     
-        % Select Dark Current Mode (PR-670 only) 
-        % Two dark current modes are available – Standard and Smart Dark. 
-        % In Standard Mode, the instrument measures the detector dark current after each light measurement. 
-        % If Smart Dark is enabled and two successive measurements yield the same exposure time, 
-        % then the dark current values from the first measurement are used for the second (and possibly successive) measurements. 
-        % Syntax: SDn[CR]  
-        % Where: n = Dark Current Mode  
-        %        0 = Disable Smart Dark 
-        %        1 = Enable Smart Dark 
-        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
-        function status = select_dark_mode(camera, description)
-            camera.status_code = str2double(writeread(camera.serial_device, append('SD', num2str(camera.get_code('Dark Mode', description)))));
-            status = camera.read_code('Error', camera.status_code);
-        end
-    
         % Select Exposure Time 
         % Enter the Exposure (Integration) time for the next measurement in milliseconds. 
         % Possible values are 6 – 6,000 (6 sec.) for Standard Mode, and 6 - 30,000 (30 sec.) for Extended Mode. 
@@ -375,46 +386,6 @@ classdef SpectraScanPR655 < handle
         % Note: Standard and Extended modes apply only to PR-670. PR-655 exposure range is 3 to 6,000 ms 
         function status = set_exposure_time(camera, exposure_time)
             camera.status_code = str2double(writeread(camera.serial_device, append('SE', num2str(exposure_time))));
-            status = camera.read_code('Error', camera.status_code);
-        end
-    
-        % Aperture Select (PR-670 only) 
-        % Select the aperture to be used for the next measurement.   
-        % Syntax: SFa[CR]  
-        % Where: a = aperture code 
-        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
-        % Note: See Data Code 117 for details on aperture codes. 
-        function status = select_aperture(camera, description)
-            camera.status_code = str2double(writeread(camera.serial_device, append('SF', num2str(camera.get_code('Aperture', description)))));
-            status = camera.read_code('Error', camera.status_code);
-        end
-    
-        % Speed Mode (PR-670 only) 
-        % Select the Speed Mode for the next measurement. Choices are Normal, 1X Fast, 2X Fast and 4X Fast. 
-        % Syntax: SGg[CR]  
-        % Where: g = Gain  
-        %        0 = Normal (DEFAULT),  
-        %        1 = 1X for AC sources,  
-        %        2 = 10X 
-        %        3 = 100X 
-        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
-        function status = select_speed_mode(camera, description)
-            camera.status_code = str2double(writeread(camera.serial_device, append('SG', num2str(camera.get_code('Speed Mode', description)))));
-            status = camera.read_code('Error', camera.status_code);
-        end
-    
-        % Sensitivity Mode (PR-670 only) 
-        % Select the Sensitivity Mode for the next measurement. 
-        % The two available modes are Standard and Extended. 
-        % In Standard Mode, the exposure time range is 6 ms to 6,000 ms (6 sec.). 
-        % In Extended Mode, the upper limit is extended to 30,000 ms (30 sec.). 
-        % Syntax: SHm[CR]  
-        % Where: m = Sensitivity Mode  
-        %        0 = Standard Mode 
-        %        1 = Extended Mode 
-        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
-        function status = select_sensitivity_mode(camera, description)
-            camera.status_code = str2double(writeread(camera.serial_device, append('SH', num2str(camera.get_code('Sensitivity Mode', description)))));
             status = camera.read_code('Error', camera.status_code);
         end
     
@@ -510,6 +481,45 @@ classdef SpectraScanPR655 < handle
             camera.status_code = str2double(writeread(camera.serial_device, append('SZ', num2str(camera.get_code('Shutter Mode', description)))));
             status = camera.read_code('Error', camera.status_code);
         end
+    
+        % Select Dark Current Mode (PR-670 only) 
+        % Two dark current modes are available – Standard and Smart Dark. 
+        % In Standard Mode, the instrument measures the detector dark current after each light measurement. 
+        % If Smart Dark is enabled and two successive measurements yield the same exposure time, 
+        % then the dark current values from the first measurement are used for the second (and possibly successive) measurements. 
+        % Syntax: SDn[CR]  
+        % Where: n = Dark Current Mode  
+        %        0 = Disable Smart Dark 
+        %        1 = Enable Smart Dark 
+        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
+    
+        % Aperture Select (PR-670 only) 
+        % Select the aperture to be used for the next measurement.   
+        % Syntax: SFa[CR]  
+        % Where: a = aperture code 
+        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
+        % Note: See Data Code 117 for details on aperture codes. 
+    
+        % Speed Mode (PR-670 only) 
+        % Select the Speed Mode for the next measurement. Choices are Normal, 1X Fast, 2X Fast and 4X Fast. 
+        % Syntax: SGg[CR]  
+        % Where: g = Gain  
+        %        0 = Normal (DEFAULT),  
+        %        1 = 1X for AC sources,  
+        %        2 = 10X 
+        %        3 = 100X 
+        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
+    
+        % Sensitivity Mode (PR-670 only) 
+        % Select the Sensitivity Mode for the next measurement. 
+        % The two available modes are Standard and Extended. 
+        % In Standard Mode, the exposure time range is 6 ms to 6,000 ms (6 sec.). 
+        % In Extended Mode, the upper limit is extended to 30,000 ms (30 sec.). 
+        % Syntax: SHm[CR]  
+        % Where: m = Sensitivity Mode  
+        %        0 = Standard Mode 
+        %        1 = Extended Mode 
+        % Response: 0000[CR][LF] If all OK, else NNNN[CR][LF] (NNNN = Error code) 
 
         % Purpose: Enable Reset Command Mode 
         % Syntax: ZEnableReset 
