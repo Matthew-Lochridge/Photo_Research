@@ -7,9 +7,18 @@ classdef SpectraScanPR655 < handle
         serial_number
         model
         software_version
+        backlight {mustBeNumeric} = 100;
+        contrast {mustBeNumeric} = 50;
         bandwidth {mustBeNumeric}
-        last_exposure_time {mustBeNumeric}
-        last_sync_frequency {mustBeNumeric}
+        num_spectral_pts {mustBeNumeric}
+        wavelength_min {mustBeNumeric}
+        wavelength_max {mustBeNumeric}
+        wavelength_step {mustBeNumeric}
+        num_pixels {mustBeNumeric}
+        first_usable_pix {mustBeNumeric}
+        last_usable_pix {mustBeNumeric}
+        exposure_time {mustBeNumeric}
+        sync_frequency {mustBeNumeric}
         primary_lens
         addon1
         addon2
@@ -20,6 +29,7 @@ classdef SpectraScanPR655 < handle
         CIE_observer
         sync_mode
         shutter_mode
+        exposure_mode
         photometry_mode
         radiometry_mode
         measurement_label
@@ -137,7 +147,7 @@ classdef SpectraScanPR655 < handle
             camera.data.G = response(4);
             camera.data.B = response(5);
             fig = figure;
-            plotChromaticity('ColorSpace','xy');
+            plotChromaticity;
             hold on;
             plot(camera.data.x, camera.data.y, '*k');
             hold off;
@@ -203,8 +213,13 @@ classdef SpectraScanPR655 < handle
             camera.data.peak_wavelength = response(3);
             camera.data.integrated_radiometric = response(4);
             camera.data.integrated_photon_radiometric = response(5);
-            camera.data.wavelengths = response(6:2:end-1);
-            camera.data.radiometric_spectrum = response(7:2:end);
+            camera.data.wavelengths = [];
+            camera.data.radiometric_spectrum = [];
+            for wl = 1:camera.num_spectral_pts
+                response = str2double(split(readline(camera.serial_device), ','));
+                camera.data.wavelengths(wl) = response(1);
+                camera.data.radiometric_spectrum(wl) = response(2);
+            end
             fig = figure;
             plot(camera.data.wavelengths, camera.data.radiometric_spectrum);
             xlabel('Wavelength (nm)');
@@ -230,7 +245,7 @@ classdef SpectraScanPR655 < handle
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function status = get_raw_light(camera, command)
+        function [fig, ax, status] = get_raw_light(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M8'), ','));
             elseif strcmpi(command, 'Download')
@@ -241,7 +256,7 @@ classdef SpectraScanPR655 < handle
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function status = get_raw_dark(camera, command)
+        function [fig, ax, status] = get_raw_dark(camera, command)
             if strcmpi(command, 'Measure')
                 response = str2double(split(writeread(camera.serial_device, 'M9'), ','));
             elseif strcmpi(command, 'Download')
@@ -265,10 +280,26 @@ classdef SpectraScanPR655 < handle
             camera.addon3 = camera.read_code('Addon', response(5));
             camera.aperture = camera.read_code('Aperture', response(6));
             camera.unit_system = camera.read_code('Unit System', response(7));
-            camera.cycles_to_average = response(9);
-            camera.CIE_observer = camera.read_code('CIE Observer', response(10));
-            camera.sync_mode = camera.read_code('Sync Mode', response(11));
-            camera.shutter_mode = camera.read_code('Shutter Mode', response(12));
+            camera.exposure_mode = camera.read_code('Exposure Mode', response(8));
+            camera.exposure_time = response(9);
+            camera.cycles_to_average = response(10);
+            camera.shutter_mode = camera.read_code('Shutter Mode', response(11));
+            camera.CIE_observer = camera.read_code('CIE Observer', response(12));
+            response = str2double(split(writeread(camera.serial_device, 'D120'), ','));
+            camera.status_code = response(1);
+            camera.num_spectral_pts = response(2);
+            camera.bandwidth = response(3);
+            camera.wavelength_min = response(4);
+            camera.wavelength_max = response(5);
+            camera.wavelength_step = response(6);
+            camera.num_pixels = response(7);
+            camera.first_usable_pix = response(8);
+            camera.last_usable_pix = response(9);
+            response = split(writeread(camera.serial_device, 'D14'), ',');
+            camera.status_code = str2double(response{1});
+            camera.sync_mode = response{2};
+            sync_freq = split(response{3}, ' ');
+            camera.sync_frequency = str2double(sync_freq{1});
             response = split(writeread(camera.serial_device, 'D110'), ',');
             camera.status_code = str2double(response{1});
             camera.serial_number = response{2};
@@ -282,12 +313,6 @@ classdef SpectraScanPR655 < handle
             camera.status_code = str2double(response{1});
             camera.photometry_mode = response{end-1};
             camera.radiometry_mode = response{end};
-            response = str2double(split(writeread(camera.serial_device, 'D13'), ','));
-            camera.status_code = response(1);
-            camera.last_exposure_time = response(3);
-            response = str2double(split(writeread(camera.serial_device, 'D14'), ','));
-            camera.status_code = response(1);
-            camera.last_sync_frequency = response(3);
             status = camera.read_code('Error', camera.status_code);
         end
 
@@ -317,6 +342,7 @@ classdef SpectraScanPR655 < handle
         %   Range of nn = 0 to 100% 
         % Response: Backlight set to nn % 
         function status = set_backlight(camera, level)
+            camera.backlight = level;
             camera.status_code = str2double(writeread(camera.serial_device, append('B', num2str(level))));
             status = camera.read_code('Error', camera.status_code);
         end
@@ -327,7 +353,9 @@ classdef SpectraScanPR655 < handle
         % Response: "Contrast set to nnn %" 
         % See the Setup Command section for complete details 
         function status = set_contrast(camera, level)
-            camera.status_code = str2double(writeread(camera.serial_device, append('X', num2str(level)), 'char'));
+            camera.contrast = level;
+            write(camera.serial_device, append('X', num2str(level)), 'char');
+            camera.status_code = str2double(readline(camera.serial_device));
             status = camera.read_code('Error', camera.status_code);
         end
 
@@ -596,7 +624,7 @@ classdef SpectraScanPR655 < handle
                     switch description
                         case 'Adaptive'
                             code = 0;
-                        case 'User Time'
+                        case 'Fixed'
                             code = 1;
                     end
                 case 'Shutter Mode'
@@ -608,11 +636,11 @@ classdef SpectraScanPR655 < handle
                     end
                 case 'Sync Mode'
                     switch description
-                        case 'No Sync'
+                        case 'None'
                             code = 0;
-                        case 'Auto Sync'
+                        case 'Automatic'
                             code = 1;
-                        case 'User Frequency'
+                        case 'User'
                             code = 2;
                     end
                 case 'CIE Observer'
@@ -711,7 +739,7 @@ classdef SpectraScanPR655 < handle
                         case 0
                             description = 'Adaptive';
                         case 1
-                            description = 'User Time';
+                            description = 'Fixed';
                     end
                 case 'Shutter Mode'
                     switch code
@@ -723,11 +751,11 @@ classdef SpectraScanPR655 < handle
                 case 'Sync Mode'
                     switch code
                         case 0
-                            description = 'No Sync';
+                            description = 'None';
                         case 1
-                            description = 'Auto Sync';
+                            description = 'Automatic';
                         case 2
-                            description = 'User Frequency';
+                            description = 'User';
                     end
                 case 'CIE Observer'
                     switch code
