@@ -131,21 +131,61 @@ classdef SpectraScanPR655 < handle
             status = camera.read_code('Error', camera.status_code);
         end
 
-        function [fig, ax, status] = get_CIE_1931(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M1'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D1'), ','));
-            end
+        function status = measure(camera)
+            response = str2double(split(writeread(camera.serial_device, 'M1'), ',')); % CIE 1931
             camera.status_code = response(1);
             camera.data.Y = response(3);
             camera.data.x = response(4);
             camera.data.y = response(5);
-            response = str2double(split(writeread(camera.serial_device, 'D2'), ','));
+            response = str2double(split(writeread(camera.serial_device, 'D2'), ',')); % CIE 1931 tristimulus
             camera.status_code = response(1);
             camera.data.R = response(3);
             camera.data.G = response(4);
             camera.data.B = response(5);
+            response = str2double(split(writeread(camera.serial_device, 'D7'), ',')); % CIE 1960
+            camera.status_code = response(1);
+            camera.data.u = response(4);
+            camera.data.v = response(5);
+            response = str2double(split(writeread(camera.serial_device, 'D3'), ',')); % CIE 1976
+            camera.status_code = response(1);
+            camera.data.u_prime = response(4);
+            camera.data.v_prime = response(5);
+            response = str2double(split(writeread(camera.serial_device, 'D4'), ',')); % correlated color temperature
+            camera.status_code = response(1);
+            camera.data.Y = response(3);
+            camera.data.CCT = response(4);
+            camera.data.Planck_locus_deviation = response(5);
+            response = str2double(split(writeread(camera.serial_device, 'D11'), ',')); % scotopic brightness
+            camera.status_code = response(1);
+            camera.data.S = response(3);
+            response = str2double(split(writeread(camera.serial_device, 'D5'), ',')); % radiometric spectrum
+            camera.status_code = response(1);
+            camera.data.peak_wavelength = response(3);
+            camera.data.integrated_radiometric = response(4);
+            camera.data.integrated_photon_radiometric = response(5);
+            camera.data.wavelengths = zeros(1, camera.num_spectral_pts);
+            camera.data.radiometric_spectrum = zeros(1, camera.num_spectral_pts);
+            for wl = 1:camera.num_spectral_pts
+                response = str2double(split(readline(camera.serial_device), ','));
+                camera.data.wavelengths(wl) = response(1);
+                camera.data.radiometric_spectrum(wl) = response(2);
+            end
+            response = str2double(split(writeread(camera.serial_device, 'D8'), ',')); % raw light per pixel
+            camera.status_code = response(1);
+            camera.data.raw_light = zeros(1, camera.num_pixels);
+            for pix = 1:camera.num_pixels
+                camera.data.raw_light(pix) = str2double(readline(camera.serial_device));
+            end
+            response = str2double(split(writeread(camera.serial_device, 'D8'), ',')); % raw dark per pixel
+            camera.status_code = response(1);
+            camera.data.raw_dark = zeros(1, camera.num_pixels);
+            for pix = 1:camera.num_pixels
+                camera.data.raw_dark(pix) = str2double(readline(camera.serial_device));
+            end
+            status = camera.read_code('Error', camera.status_code);
+        end
+
+        function [fig, ax] = plot_CIE_1931(camera)
             fig = figure;
             plotChromaticity;
             hold on;
@@ -153,33 +193,13 @@ classdef SpectraScanPR655 < handle
             hold off;
             title('CIE 1931');
             ax = gca;
-            status = camera.read_code('Error', camera.status_code);
         end
 
-        function [fig, ax, status] = get_CIE_1960(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M7'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D7'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.Y = response(3);
-            camera.data.u = response(4);
-            camera.data.v = response(5);
+        function [fig, ax] = plot_CIE_1960(camera)
 
-            status = camera.read_code('Error', camera.status_code);
         end
 
-        function [fig, ax, status] = get_CIE_1976(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M6'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D6'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.Y = response(3);
-            camera.data.u_prime = response(4);
-            camera.data.v_prime = response(5);
+        function [fig, ax] = plot_CIE_1976(camera)
             fig = figure;
             plotChromaticity('ColorSpace','uv');
             hold on;
@@ -187,92 +207,43 @@ classdef SpectraScanPR655 < handle
             hold off;
             title('CIE 1976');
             ax = gca;
-            status = camera.read_code('Error', camera.status_code);
         end
 
-        function [fig, ax, status] = get_CCT(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M4'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D4'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.Y = response(3);
-            camera.data.CCT = response(4);
-            camera.data.Planck_locus_deviation = response(5);
-            status = camera.read_code('Error', camera.status_code);
-        end
-
-        function [fig, ax, status] = get_radiometric_spectrum(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M5'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D5'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.peak_wavelength = response(3);
-            camera.data.integrated_radiometric = response(4);
-            camera.data.integrated_photon_radiometric = response(5);
-            camera.data.wavelengths = [];
-            camera.data.radiometric_spectrum = [];
-            for wl = 1:camera.num_spectral_pts
-                response = str2double(split(readline(camera.serial_device), ','));
-                camera.data.wavelengths(wl) = response(1);
-                camera.data.radiometric_spectrum(wl) = response(2);
-            end
+        function [fig, ax] = plot_spectrum(camera)
             fig = figure;
             plot(camera.data.wavelengths, camera.data.radiometric_spectrum);
             xlabel('Wavelength (nm)');
             switch camera.radiometry_mode
                 case 'Radiance'
-
+                    ylabel('Radiance (W/sr/m^2)');
                 case 'Irradiance'
-
+                    ylabel('Irradiance (W/m^2)');
+                otherwise
+                    ylabel('Radiometric Amplitude');
             end
-            ylabel('Radiometric Amplitude');
             ax = gca;
-            status = camera.read_code('Error', camera.status_code);
         end
 
-        function status = get_scotopic_brightness(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M11'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D11'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.S = response(3);
-            status = camera.read_code('Error', camera.status_code);
+        function [fig, ax] = plot_raw_light(camera)
+            fig = figure;
+            usable_pix = camera.first_usable_pix:camera.last_usable_pix;
+            plot(usable_pix, camera.data.raw_light(usable_pix));
+            xlabel('Pixel');
+            ylabel('Raw Signal');
+            ax = gca;
         end
 
-        function [fig, ax, status] = get_raw_light(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M8'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D8'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.raw_light = response(2:end);
-            status = camera.read_code('Error', camera.status_code);
+        function [fig, ax] = plot_raw_dark(camera)
+            fig = figure;
+            usable_pix = camera.first_usable_pix:camera.last_usable_pix;
+            plot(usable_pix, camera.data.raw_dark(usable_pix));
+            xlabel('Pixel');
+            ylabel('Raw Signal');
+            ax = gca;
         end
 
-        function [fig, ax, status] = get_raw_dark(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M9'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D9'), ','));
-            end
-            camera.status_code = response(1);
-            camera.data.raw_dark = response(2:end);
-            status = camera.read_code('Error', camera.status_code);
-        end
-
-        function status = update_specs(camera, command)
-            if strcmpi(command, 'Measure')
-                response = str2double(split(writeread(camera.serial_device, 'M601'), ','));
-            elseif strcmpi(command, 'Download')
-                response = str2double(split(writeread(camera.serial_device, 'D601'), ','));
-            end
+        function status = update_specs(camera)
+            response = str2double(split(writeread(camera.serial_device, 'D601'), ','));
             camera.status_code = response(1);
             camera.primary_lens = camera.read_code('Primary', response(2));
             camera.addon1 = camera.read_code('Addon', response(3));
