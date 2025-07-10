@@ -1,4 +1,4 @@
-classdef SpectraScanPR655 < handle
+classdef class_SpectraScanPR655 < handle
 
     properties
         serial_device
@@ -37,7 +37,7 @@ classdef SpectraScanPR655 < handle
     end
 
     methods
-        function camera = SpectraScanPR655(serial_port, baud_rate)
+        function camera = class_SpectraScanPR655(serial_port, baud_rate)
             camera.serial_device = serialport(serial_port, baud_rate, 'FlowControl', 'hardware');
             configureTerminator(camera.serial_device, 'CR/LF', 'CR');
         end
