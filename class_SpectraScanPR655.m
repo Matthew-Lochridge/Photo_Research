@@ -2,6 +2,7 @@ classdef class_SpectraScanPR655 < handle
 
     properties
         serial_device
+        delay {mustBeNumeric} = 0.1;
         status_code {mustBeNumeric}
         echo_mode = 'Disabled';
         serial_number
@@ -133,32 +134,39 @@ classdef class_SpectraScanPR655 < handle
 
         function status = measure(camera)
             response = str2double(split(writeread(camera.serial_device, 'M1'), ',')); % CIE 1931
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.Y = response(3);
             camera.data.x = response(4);
             camera.data.y = response(5);
             response = str2double(split(writeread(camera.serial_device, 'D2'), ',')); % CIE 1931 tristimulus
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.R = response(3);
             camera.data.G = response(4);
             camera.data.B = response(5);
             response = str2double(split(writeread(camera.serial_device, 'D7'), ',')); % CIE 1960
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.u = response(4);
             camera.data.v = response(5);
             response = str2double(split(writeread(camera.serial_device, 'D3'), ',')); % CIE 1976
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.u_prime = response(4);
             camera.data.v_prime = response(5);
             response = str2double(split(writeread(camera.serial_device, 'D4'), ',')); % correlated color temperature
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.Y = response(3);
             camera.data.CCT = response(4);
             camera.data.Planck_locus_deviation = response(5);
             response = str2double(split(writeread(camera.serial_device, 'D11'), ',')); % scotopic brightness
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.S = response(3);
             response = str2double(split(writeread(camera.serial_device, 'D5'), ',')); % radiometric spectrum
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.peak_wavelength = response(3);
             camera.data.integrated_radiometric = response(4);
@@ -171,12 +179,14 @@ classdef class_SpectraScanPR655 < handle
                 camera.data.radiometric_spectrum(wl) = response(2);
             end
             response = str2double(split(writeread(camera.serial_device, 'D8'), ',')); % raw light per pixel
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.raw_light = zeros(1, camera.num_pixels);
             for pix = 1:camera.num_pixels
                 camera.data.raw_light(pix) = str2double(readline(camera.serial_device));
             end
             response = str2double(split(writeread(camera.serial_device, 'D8'), ',')); % raw dark per pixel
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.data.raw_dark = zeros(1, camera.num_pixels);
             for pix = 1:camera.num_pixels
@@ -244,6 +254,7 @@ classdef class_SpectraScanPR655 < handle
 
         function status = update_specs(camera)
             response = str2double(split(writeread(camera.serial_device, 'D601'), ','));
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.primary_lens = camera.read_code('Primary', response(2));
             camera.addon1 = camera.read_code('Addon', response(3));
@@ -257,6 +268,7 @@ classdef class_SpectraScanPR655 < handle
             camera.shutter_mode = camera.read_code('Shutter Mode', response(11));
             camera.CIE_observer = camera.read_code('CIE Observer', response(12));
             response = str2double(split(writeread(camera.serial_device, 'D120'), ','));
+            pause(camera.delay);
             camera.status_code = response(1);
             camera.num_spectral_pts = response(2);
             camera.bandwidth = response(3);
@@ -267,20 +279,25 @@ classdef class_SpectraScanPR655 < handle
             camera.first_usable_pix = response(8);
             camera.last_usable_pix = response(9);
             response = split(writeread(camera.serial_device, 'D14'), ',');
+            pause(camera.delay);
             camera.status_code = str2double(response{1});
             camera.sync_mode = response{2};
             sync_freq = split(response{3}, ' ');
             camera.sync_frequency = str2double(sync_freq{1});
             response = split(writeread(camera.serial_device, 'D110'), ',');
+            pause(camera.delay);
             camera.status_code = str2double(response{1});
             camera.serial_number = response{2};
             response = split(writeread(camera.serial_device, 'D111'), ',');
+            pause(camera.delay);
             camera.status_code = str2double(response{1});
             camera.model = response{2};
             response = split(writeread(camera.serial_device, 'D114'), ',');
+            pause(camera.delay);
             camera.status_code = str2double(response{1});
             camera.software_version = response{2};
             response = split(writeread(camera.serial_device, 'D116'), ',');
+            pause(camera.delay);
             camera.status_code = str2double(response{1});
             camera.photometry_mode = response{end-1};
             camera.radiometry_mode = response{end};
